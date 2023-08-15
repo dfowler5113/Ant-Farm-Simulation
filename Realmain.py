@@ -31,7 +31,7 @@ brown = pygame.Color(165, 42, 42)
 # Blue color
 blue = pygame.Color(0, 0, 255)
 
-MAX_MEMORY = 100000
+MAX_MEMORY = 1000
 BATCH_SIZE = 1
 LR = 0.1
 
@@ -77,7 +77,7 @@ class Queen(pygame.sprite.Sprite):
             self.rect.y = y
             self.x = self.rect.x
             self.y = self.rect.y
-            self.health = 100
+            self.health = 500
             self.canMate = True
             
             self.font = pygame.font.SysFont("Verdana", 20)
@@ -111,7 +111,7 @@ class Ant(pygame.sprite.Sprite):
             self.antgroup = antgroup
             self.foodgroup = foodgroup
             self.QueenGroup = QueenGroup
-            self.health = 50
+            self.health = 100
             self.canMate = True
             self.CanAttack = False
             self.CanFarm = False
@@ -129,6 +129,7 @@ class Ant(pygame.sprite.Sprite):
             self.down = False
             self.left = False
             self.right = False
+            self.antSpawned = False 
             
             self.queenreward = 0
             self.matingreward = 0
@@ -140,7 +141,7 @@ class Ant(pygame.sprite.Sprite):
             self.fighterattackqueenreward =0
             self.attackreward =0
             self.bumpqueenreward =0
-
+            self.epsilon = 50
             self.bumpedqueen = False
             self.attacked = False
             self.attackedqueen = False
@@ -249,8 +250,8 @@ class Ant(pygame.sprite.Sprite):
 
         def get_action(self, state):
             # random moves: tradeoff exploration / exploitation
-            self.epsilon = 10
-            self.epsilon_decay = 1.0009 
+            
+            self.epsilon_decay = 1.00001  
             final_move = [0,0,0,0]
             
             if random.uniform(0, 100) < self.epsilon:
@@ -264,7 +265,8 @@ class Ant(pygame.sprite.Sprite):
                 final_move[move] = 1
                 
             #print(final_move)
-            #self.epsilon/=self.epsilon_decay
+            self.epsilon /= self.epsilon_decay
+            print(self.epsilon)
             
             return final_move
         def train_long_memory(self):
@@ -279,8 +281,10 @@ class Ant(pygame.sprite.Sprite):
         #    self.trainer.train_step(state, action, reward, next_state, done)
         def agentlearn(self):
             # Define an episode length
-            EPISODE_LENGTH = 50 # Adjust this as needed
-
+            EPISODE_LENGTH = 5 # Adjust this as needed
+            
+            
+            
             # Get the old state
             state_old = self.get_state()
 
@@ -293,7 +297,7 @@ class Ant(pygame.sprite.Sprite):
 
             # Add the step to the current episode
             self.current_episode.append((state_old, final_move, reward, state_new, done))
-
+            #print(self.current_episode)
             # If the episode has reached the maximum length or the ant has hit a border, train the model based on the episode
             if len(self.current_episode) >= EPISODE_LENGTH :
                 # Train short memory and remember for each step in the episode
@@ -385,8 +389,7 @@ class Ant(pygame.sprite.Sprite):
                     for x in collided:
                         if x.color!= self.color:
                             self.fighterreward=2
-                            self.health-=3
-                            x.health-=5
+                            x.health-=7
                             self.attacked = True
                             if x.health<0:
                                 x.kill()
@@ -402,7 +405,7 @@ class Ant(pygame.sprite.Sprite):
                         if x.color!= self.color:
                             self.fighterattackqueenreward=5
                             
-                            x.health-=10
+                            x.health-=1
                             self.attackedqueen = True
                             if x.health<0:
                                 x.kill()
@@ -425,8 +428,7 @@ class Ant(pygame.sprite.Sprite):
                     for x in collided:
                         if x.color!= self.color:
                             self.attackreward=1
-                            self.health-=5
-                            x.health-=5
+                            x.health-=3
                             self.attacked = True
                             if x.health<0:
                                 x.kill()
@@ -446,19 +448,21 @@ class Ant(pygame.sprite.Sprite):
                 else:
                     self.friendlyreward-=1
             #mate ant collides with queen 
-            if self.TypeOfAnt == 2:
+            if self.TypeOfAnt == 2 and not self.antSpawned:
                 collided = pygame.sprite.spritecollide(self,self.QueenGroup,dokill = False)
                 if collided:
                     for x in collided:
                         if x.color== self.color :
                             self.matingreward=10
-                            a = random.randint(180, 1220)
-                            y = random.randint(50, 640)
-                            num = self.number +1
-                            self.mated = False
-                            AntGroup.add(Ant(a,y,self.color,FoodGroup,AntGroup,num,QueenGroup))
+                            for i in range(3):
+                                a = random.randint(180, 1220)
+                                y = random.randint(50, 640)
+                                num = self.number +1
+                                self.mated = False
+                                AntGroup.add(Ant(a,y,self.color,FoodGroup,AntGroup,num,QueenGroup))
                             collided = []
                             self.canMate = False
+                            self.antSpawned = True 
                             break
                 else:
                     self.matingreward = -1
@@ -478,10 +482,10 @@ class Ant(pygame.sprite.Sprite):
                         
             self.reward = (self.queenreward + self.matingreward + self.farmerantreward+self.otherantseatreward + self.farmerantreward + self.fighterreward +self.friendlyreward + self.fighterattackqueenreward +self.attackreward + self.bumpqueenreward + self.health)
             if self.didanything == False:
-                self.reward -=5
+                self.reward -=50
                 self.health -=.5
             
-            print(self.reward)
+            #print(self.reward)
             
             #display.blit(self.text, self.pos)
             self.gameover = False
