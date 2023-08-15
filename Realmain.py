@@ -211,10 +211,11 @@ class Ant(pygame.sprite.Sprite):
             return grid
         def distance_to_nearest_queen(self):
             #min_distance = float('inf')
+            distance = 0
             for queen in self.QueenGroup:
                 if queen.color == self.color:
                     distance = ((queen.rect.x - self.rect.x) ** 2 + (queen.rect.y - self.rect.y) ** 2) ** 0.5
-                    
+            
             return distance
         def get_state(self):
             # Get the 3x3 grid around the ant
@@ -517,7 +518,7 @@ for num in range(1000):
     b = random.randint(50, 640)
     FoodGroup.add(Food(a,b))
 
-for num in range(2):
+for num in range(10):
     x = random.randint(180, 1220)
     y = random.randint(50, 640)
     AntGroup.add(Ant(x,y,red,FoodGroup,AntGroup,num,QueenGroup))
@@ -527,7 +528,7 @@ y = random.randint(50, 640)
 QueenGroup.add(Queen(x,y,red))
 
 
-for num in range(2):
+for num in range(10):
     x = random.randint(180, 1220)
     y = random.randint(50, 640)
     AntGroup.add(Ant(x,y,brown,FoodGroup,AntGroup,num,QueenGroup))
@@ -537,7 +538,7 @@ y = random.randint(50, 640)
 QueenGroup.add(Queen(x,y,brown))
 
 
-for num in range(2):
+for num in range(10):
     x = random.randint(180, 1220)
     y = random.randint(50, 640)
     AntGroup.add(Ant(x,y,blue,FoodGroup,AntGroup,num,QueenGroup))
